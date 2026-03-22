@@ -24,19 +24,19 @@ var CLOUDINARY_CONFIG = {
 // ============================================================
 var STAR_CONFIG = {
   // Зірочки під фото товару в каталозі (сторінка зі списком товарів)
-  catalog_desktop: 16,
+  catalog_desktop: 22,
   catalog_mobile: 14,
 
   // Зірочки над назвою товару на сторінці товару (вгорі в правій колонці)
-  product_header_desktop: 22,
-  product_header_mobile: 16,
+  product_header_desktop: 26,
+  product_header_mobile: 20,
 
   // Середній рейтинг у блоці відгуків (великі зірочки біля числа 5.0)
-  avg_rating_desktop: 22,
-  avg_rating_mobile: 18,
+  avg_rating_desktop: 28,
+  avg_rating_mobile: 22,
 
   // Зірочки біля кожного окремого відгуку в списку
-  review_item_desktop: 14,
+  review_item_desktop: 16,
   review_item_mobile: 13,
 };
 
