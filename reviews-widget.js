@@ -692,26 +692,21 @@ const CLOUDINARY_CONFIG = {
   function moveWidget() {
     var widget = document.querySelector('.rw-widget');
     if (!widget || widget.dataset.moved) return;
-    var colRight = null;
+
+    // Знаходимо головний контейнер магазину
+    var storeContainer = null;
     var el = widget.parentElement;
     while (el && el !== document.body) {
-      if (el.className && el.className.indexOf('t-store__prod-popup__col-right') !== -1) {
-        colRight = el; break;
+      if (el.className && el.className.indexOf('t-store__prod-snippet__container') !== -1) {
+        storeContainer = el; break;
       }
       el = el.parentElement;
     }
-    if (!colRight) return;
-    var container = colRight.parentElement;
-    while (container && container !== document.body) {
-      if (container.className && (
-        container.className.indexOf('t-store__prod-popup') !== -1 ||
-        container.className.indexOf('t-container') !== -1
-      )) break;
-      container = container.parentElement;
-    }
-    if (!container) return;
+    if (!storeContainer) return;
+
     widget.dataset.moved = '1';
-    container.parentNode.insertBefore(widget, container.nextSibling);
+    // Вставляємо після головного контейнера магазину
+    storeContainer.parentNode.insertBefore(widget, storeContainer.nextSibling);
   }
 
   setTimeout(function() { moveHeader(); moveWidget(); }, 600);
