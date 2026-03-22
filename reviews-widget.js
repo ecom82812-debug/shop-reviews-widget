@@ -121,7 +121,6 @@ var PHOTO_CONFIG = {
     style.id = 'rw-styles';
     style.textContent = [
       '.rw-stars { display:inline-flex; gap:2px; vertical-align:middle; }',
-      '.rw-star { width:14px; height:14px; }',
       '.rw-star-full { fill:#F5A623; }',
       '.rw-star-empty { fill:none; stroke:#F5A623; stroke-width:1.5; }',
 
