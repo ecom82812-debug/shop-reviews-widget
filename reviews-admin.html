@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Панель відгуків</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f5f5f5; color:#111; }
+  .header { background:#111; color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
+  .header h1 { font-size:18px; font-weight:700; }
+  .header span { font-size:13px; color:#aaa; }
+  .tabs { display:flex; gap:0; background:#fff; border-bottom:1px solid #eee; padding:0 24px; }
+  .tab { padding:14px 20px; font-size:14px; cursor:pointer; border-bottom:2px solid transparent; color:#666; font-weight:500; }
+  .tab.active { border-bottom-color:#111; color:#111; }
+  .container { max-width:900px; margin:24px auto; padding:0 16px; }
+  .card { background:#fff; border-radius:12px; border:1px solid #eee; margin-bottom:16px; overflow:hidden; }
+  .card-header { padding:16px 20px; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; border-bottom:1px solid #f5f5f5; }
+  .card-meta { display:flex; flex-direction:column; gap:4px; }
+  .card-author { font-weight:700; font-size:15px; }
+  .card-sub { font-size:12px; color:#888; display:flex; gap:12px; flex-wrap:wrap; }
+  .stars { display:inline-flex; gap:1px; }
+  .star { width:14px; height:14px; }
+  .card-body { padding:16px 20px; }
+  .card-text { font-size:14px; line-height:1.6; color:#333; margin-bottom:12px; }
+  .card-photos { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .card-photos img { width:64px; height:64px; border-radius:6px; object-fit:cover; border:1px solid #eee; cursor:pointer; }
+  .card-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .btn { padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; border:1.5px solid transparent; transition:all .15s; }
+  .btn-approve { background:#e8f5e9; color:#2e7d32; border-color:#a5d6a7; }
+  .btn-approve:hover { background:#2e7d32; color:#fff; }
+  .btn-reject { background:#ffebee; color:#c62828; border-color:#ef9a9a; }
+  .btn-reject:hover { background:#c62828; color:#fff; }
+  .btn-reply { background:#e3f2fd; color:#1565c0; border-color:#90caf9; }
+  .btn-reply:hover { background:#1565c0; color:#fff; }
+  .btn-delete { background:#f5f5f5; color:#666; border-color:#ddd; }
+  .btn-delete:hover { background:#666; color:#fff; }
+  .reply-form { padding:12px 20px; background:#fafafa; border-top:1px solid #f0f0f0; display:none; }
+  .reply-form textarea { width:100%; border:1px solid #ddd; border-radius:8px; padding:10px; font-size:14px; font-family:inherit; resize:vertical; min-height:80px; }
+  .reply-form-actions { display:flex; gap:8px; margin-top:8px; }
+  .btn-sm { padding:7px 14px; font-size:13px; border-radius:6px; cursor:pointer; border:none; font-weight:600; }
+  .btn-dark { background:#111; color:#fff; }
+  .btn-light { background:#eee; color:#333; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; }
+  .badge-pending { background:#fff3e0; color:#e65100; }
+  .badge-approved { background:#e8f5e9; color:#2e7d32; }
+  .badge-rejected { background:#ffebee; color:#c62828; }
+  .empty { text-align:center; padding:48px; color:#aaa; font-size:15px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:24px; }
+  .stat { background:#fff; border-radius:10px; border:1px solid #eee; padding:16px; text-align:center; }
+  .stat-num { font-size:28px; font-weight:800; color:#111; }
+  .stat-label { font-size:12px; color:#888; margin-top:4px; }
+  .existing-reply { background:#f0f4ff; border-left:3px solid #3b82f6; padding:10px 14px; border-radius:0 8px 8px 0; margin-top:8px; font-size:13px; }
+  .existing-reply strong { display:block; font-size:11px; color:#666; margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+  .product-id { font-size:11px; background:#f0f0f0; padding:2px 8px; border-radius:4px; color:#555; font-family:monospace; }
+  @media(max-width:600px) {
+    .container { padding:0 8px; }
+    .card-header { flex-direction:column; }
+    .stats { grid-template-columns:1fr 1fr; }
+  }
+  /* Lightbox */
+  .lb { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:9999; display:flex; align-items:center; justify-content:center; cursor:zoom-out; }
+  .lb img { max-width:90vw; max-height:90vh; border-radius:8px; object-fit:contain; }
+  .lb-close { position:absolute; top:16px; right:20px; color:#fff; font-size:32px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Панель відгуків</h1>
+  <span id="header-user"></span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-tab="pending">Очікують <span id="cnt-pending"></span></div>
+  <div class="tab" data-tab="approved">Опубліковані <span id="cnt-approved"></span></div>
+  <div class="tab" data-tab="rejected">Відхилені <span id="cnt-rejected"></span></div>
+</div>
+
+<div class="container">
+  <div class="stats" id="stats"></div>
+  <div id="reviews-list"><div class="empty">Завантаження...</div></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// ====== НАЛАШТУВАННЯ — вставте свої ключі ======
+const firebaseConfig = {
+  apiKey: "AIzaSyCS-7Vn4X_NDxbEGyTrb1JQewf1QCQNffA",
+  authDomain: "shop-reviews-3aedd.firebaseapp.com",
+  projectId: "shop-reviews-3aedd",
+  storageBucket: "shop-reviews-3aedd.firebasestorage.app",
+  messagingSenderId: "191060203071",
+  appId: "1:191060203071:web:c3025da0b9e7d805948a8a"
+};
+// ===============================================
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let currentTab = 'pending';
+let allReviews = [];
+
+// Завантажуємо всі відгуки
+function loadAll() {
+  db.collection('reviews').orderBy('createdAt','desc').onSnapshot(snap => {
+    allReviews = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateStats();
+    renderTab();
+  });
+}
+
+function updateStats() {
+  const pending = allReviews.filter(r => r.status === 'pending').length;
+  const approved = allReviews.filter(r => r.status === 'approved').length;
+  const rejected = allReviews.filter(r => r.status === 'rejected').length;
+  const totalRating = allReviews.filter(r=>r.status==='approved').reduce((s,r)=>s+(r.rating||0),0);
+  const avg = approved ? (totalRating/approved).toFixed(1) : '—';
+
+  document.getElementById('cnt-pending').textContent = pending ? `(${pending})` : '';
+  document.getElementById('cnt-approved').textContent = approved ? `(${approved})` : '';
+  document.getElementById('cnt-rejected').textContent = rejected ? `(${rejected})` : '';
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-num">${allReviews.length}</div><div class="stat-label">Всього відгуків</div></div>
+    <div class="stat"><div class="stat-num" style="color:#e65100">${pending}</div><div class="stat-label">Очікують</div></div>
+    <div class="stat"><div class="stat-num" style="color:#2e7d32">${approved}</div><div class="stat-label">Опубліковано</div></div>
+    <div class="stat"><div class="stat-num">${avg} ★</div><div class="stat-label">Середній рейтинг</div></div>
+  `;
+}
+
+function renderTab() {
+  const filtered = allReviews.filter(r => r.status === currentTab);
+  const list = document.getElementById('reviews-list');
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">Немає відгуків у цій категорії</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => buildCard(r)).join('');
+  bindCardEvents();
+}
+
+function starsHtml(n) {
+  let h = '<span class="stars">';
+  for (let i=1;i<=5;i++) {
+    const cls = i<=n ? 'fill:#F5A623' : 'fill:none;stroke:#F5A623;stroke-width:1.5';
+    h += `<svg class="star" viewBox="0 0 16 16"><path style="${cls}" d="M8 1l1.8 3.6L14 5.3l-3 2.9.7 4.1L8 10.4l-3.7 1.9.7-4.1-3-2.9 4.2-.7z"/></svg>`;
+  }
+  return h + '</span>';
+}
+
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('uk-UA');
+}
+
+function buildCard(r) {
+  const badgeMap = { pending:'badge-pending', approved:'badge-approved', rejected:'badge-rejected' };
+  const badgeLbl = { pending:'Очікує', approved:'Опубліковано', rejected:'Відхилено' };
+
+  let actions = '';
+  if (r.status === 'pending') {
+    actions = `<button class="btn btn-approve" data-id="${r.id}" data-action="approve">✓ Опублікувати</button>
+               <button class="btn btn-reject" data-id="${r.id}" data-action="reject">✕ Відхилити</button>`;
+  } else if (r.status === 'approved') {
+    actions = `<button class="btn btn-reply" data-id="${r.id}" data-action="reply">💬 Відповісти</button>
+               <button class="btn btn-reject" data-id="${r.id}" data-action="reject">Відхилити</button>`;
+  } else {
+    actions = `<button class="btn btn-approve" data-id="${r.id}" data-action="approve">Відновити</button>
+               <button class="btn btn-delete" data-id="${r.id}" data-action="delete">Видалити</button>`;
+  }
+
+  const photos = (r.photos||[]).map(url =>
+    `<img src="${url}" onclick="openLb('${url}')">`
+  ).join('');
+
+  const replyBlock = r.reply
+    ? `<div class="existing-reply"><strong>Відповідь магазину</strong>${escHtml(r.reply)}</div>`
+    : '';
+
+  return `<div class="card" id="card-${r.id}">
+    <div class="card-header">
+      <div class="card-meta">
+        <div class="card-author">${escHtml(r.name||'Анонім')} ${starsHtml(r.rating||0)}</div>
+        <div class="card-sub">
+          <span>${fmtDate(r.createdAt)}</span>
+          ${r.email ? `<span>${escHtml(r.email)}</span>` : ''}
+          <span class="product-id">product: ${r.productId||'—'}</span>
+        </div>
+      </div>
+      <span class="badge ${badgeMap[r.status]}">${badgeLbl[r.status]}</span>
+    </div>
+    <div class="card-body">
+      ${r.text ? `<div class="card-text">${escHtml(r.text)}</div>` : ''}
+      ${photos ? `<div class="card-photos">${photos}</div>` : ''}
+      ${replyBlock}
+      <div class="card-actions">${actions}</div>
+    </div>
+    <div class="reply-form" id="reply-form-${r.id}">
+      <textarea placeholder="Напишіть відповідь від магазину...">${r.reply||''}</textarea>
+      <div class="reply-form-actions">
+        <button class="btn-sm btn-dark" data-id="${r.id}" data-action="save-reply">Зберегти</button>
+        <button class="btn-sm btn-light" data-id="${r.id}" data-action="cancel-reply">Скасувати</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bindCardEvents() {
+  document.getElementById('reviews-list').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const { id, action } = btn.dataset;
+
+    if (action === 'approve') {
+      db.collection('reviews').doc(id).update({ status:'approved' });
+    } else if (action === 'reject') {
+      db.collection('reviews').doc(id).update({ status:'rejected' });
+    } else if (action === 'delete') {
+      if (confirm('Видалити цей відгук?')) {
+        db.collection('reviews').doc(id).delete();
+      }
+    } else if (action === 'reply') {
+      const form = document.getElementById('reply-form-'+id);
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    } else if (action === 'save-reply') {
+      const form = document.getElementById('reply-form-'+id);
+      const text = form.querySelector('textarea').value.trim();
+      if (!text) return;
+      db.collection('reviews').doc(id).update({ reply: text });
+      form.style.display = 'none';
+    } else if (action === 'cancel-reply') {
+      document.getElementById('reply-form-'+id).style.display = 'none';
+    }
+  });
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    renderTab();
+  });
+});
+
+// Lightbox
+function openLb(src) {
+  const lb = document.createElement('div');
+  lb.className = 'lb';
+  lb.innerHTML = `<span class="lb-close">×</span><img src="${src}">`;
+  lb.addEventListener('click', () => lb.remove());
+  document.body.appendChild(lb);
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadAll();
+</script>
+</body>
+</html>
