@@ -226,7 +226,8 @@ const CLOUDINARY_CONFIG = {
           var el = document.createElement('div');
           el.className = 'rw-inline';
           el.innerHTML = starsHTML(avg, 13) + '<strong>' + avg.toFixed(1) + '</strong><span>(' + snap.size + ')</span>';
-          var insertAfter = card.querySelector('[class*="title"], [class*="name"], h3, h2, h4');
+          // Вставляємо після назви товару
+          var insertAfter = card.querySelector('.t-store__card__title, .js-store-prod-name, [class*="title"], h3, h2');
           if (insertAfter && insertAfter.parentNode) {
             insertAfter.parentNode.insertBefore(el, insertAfter.nextSibling);
           } else {
@@ -235,29 +236,23 @@ const CLOUDINARY_CONFIG = {
         });
     }
 
-    // Варіант 1: стандартні картки Tilda Store
-    var cards = document.querySelectorAll('.t-store__card, [data-product-id]');
+    // Tilda Store картки з data-product-gen-uid (головний ID товару)
+    var cards = document.querySelectorAll('.t-store__card[data-product-gen-uid], .t-store__card[data-product-uid]');
     cards.forEach(function(card) {
-      var pid = card.dataset.productId;
-      if (!pid) {
-        var link = card.querySelector('a[href*="tproduct"]');
-        if (link) { var m = link.href.match(/tproduct\/(\d+)/); if (m) pid = m[1]; }
-      }
-      if (!pid) {
-        var link2 = card.querySelector('a[href*="productid"]');
-        if (link2) { var m2 = link2.href.match(/productid=(\d+)/); if (m2) pid = m2[1]; }
-      }
+      var pid = card.dataset.productGenUid || card.dataset.productUid;
       if (pid) processCard(card, pid);
     });
 
-    // Варіант 2: посилання на tproduct на сторінці каталогу
-    document.querySelectorAll('a[href*="tproduct"]').forEach(function(link) {
-      var m = link.href.match(/tproduct\/(\d+)/);
-      if (!m) return;
-      var pid = m[1];
-      var card = link.closest('li, article, [class*="card"], [class*="item"], [class*="product"]') || link.parentElement.parentElement;
-      if (card) processCard(card, pid);
-    });
+    // Запасний варіант через посилання
+    if (!cards.length) {
+      document.querySelectorAll('a[href*="tproduct"]').forEach(function(link) {
+        var m = link.href.match(/tproduct\/(\d+)/);
+        if (!m) return;
+        var pid = m[1];
+        var card = link.closest('.t-store__card, [class*="card"], [class*="item"]');
+        if (card) processCard(card, pid);
+      });
+    }
   }
 
   // ============================================================
