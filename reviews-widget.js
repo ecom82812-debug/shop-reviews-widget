@@ -674,25 +674,41 @@ const CLOUDINARY_CONFIG = {
 
 })();
 
-// Патч: перемістити віджет вниз на десктопі
-(function moveWidget() {
-  function move() {
-    var widget = document.querySelector('.rw-widget');
-    if (!widget) return;
-    if (widget.dataset.moved) return;
-
-    var colRight = widget.closest ? widget.closest('.t-store__prod-popup__col-right') : null;
-    if (!colRight) {
-      var el = widget.parentElement;
+// Патч: перемістити rw-header і rw-widget на правильні позиції
+(function() {
+  function moveHeader() {
+    var header = document.querySelector('.rw-inline[id^="rw-header"]');
+    if (!header || header.dataset.movedH) return;
+    var prodContainer = header.closest
+      ? header.closest('.t-store__prod-popup, .t-store__product, .t-container')
+      : null;
+    if (!prodContainer) {
+      var el = header.parentElement;
       while (el && el !== document.body) {
-        if (el.className && el.className.indexOf('t-store__prod-popup__col-right') !== -1) {
-          colRight = el; break;
-        }
+        if (el.className && (
+          el.className.indexOf('t-store__prod-popup') !== -1 ||
+          el.className.indexOf('t-container') !== -1
+        )) { prodContainer = el; break; }
         el = el.parentElement;
       }
     }
-    if (!colRight) return;
+    if (!prodContainer) return;
+    header.dataset.movedH = '1';
+    prodContainer.parentNode.insertBefore(header, prodContainer);
+  }
 
+  function moveWidget() {
+    var widget = document.querySelector('.rw-widget');
+    if (!widget || widget.dataset.moved) return;
+    var colRight = null;
+    var el = widget.parentElement;
+    while (el && el !== document.body) {
+      if (el.className && el.className.indexOf('t-store__prod-popup__col-right') !== -1) {
+        colRight = el; break;
+      }
+      el = el.parentElement;
+    }
+    if (!colRight) return;
     var container = colRight.parentElement;
     while (container && container !== document.body) {
       if (container.className && (
@@ -702,12 +718,11 @@ const CLOUDINARY_CONFIG = {
       container = container.parentElement;
     }
     if (!container) return;
-
     widget.dataset.moved = '1';
     container.parentNode.insertBefore(widget, container.nextSibling);
   }
 
-  setTimeout(move, 600);
-  setTimeout(move, 1500);
-  setTimeout(move, 3000);
+  setTimeout(function() { moveHeader(); moveWidget(); }, 600);
+  setTimeout(function() { moveHeader(); moveWidget(); }, 1500);
+  setTimeout(function() { moveHeader(); moveWidget(); }, 3000);
 })();
