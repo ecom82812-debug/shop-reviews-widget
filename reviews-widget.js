@@ -24,11 +24,11 @@ var CLOUDINARY_CONFIG = {
 // ============================================================
 var STAR_CONFIG = {
   // Зірочки під фото товару в каталозі (сторінка зі списком товарів)
-  catalog_desktop: 30,
+  catalog_desktop: 22,
   catalog_mobile: 14,
 
   // Зірочки над назвою товару на сторінці товару (вгорі в правій колонці)
-  product_header_desktop: 26,
+  product_header_desktop: 24,
   product_header_mobile: 20,
 
   // Середній рейтинг у блоці відгуків (великі зірочки біля числа 5.0)
@@ -45,7 +45,7 @@ var STAR_CONFIG = {
 // ============================================================
 var PHOTO_CONFIG = {
   // Розмір фото у відгуку (в пікселях)
-  size_desktop: 120,
+  size_desktop: 180,
   size_mobile: 80,
 };
 
