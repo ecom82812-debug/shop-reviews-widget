@@ -46,11 +46,11 @@ var RW_HOME_CONFIG = {
     var style = document.createElement('style');
     style.id = 'rw-home-styles';
     style.textContent = [
-      '.rw-home { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; max-width:900px; margin:0 auto; padding:0 16px; box-sizing:border-box; }',
+      '.rw-home { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; max-width:950px; margin:0 auto; padding:0 40px; box-sizing:border-box; }',
       '.rw-home * { box-sizing:border-box; }',
 
       // Десктоп: 2 колонки
-      '.rw-home-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }',
+      '.rw-home-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }',
 
       // Картка відгуку
       '.rw-home-card { background:#fff; border:0.5px solid #e5e5e5; border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:8px; }',
