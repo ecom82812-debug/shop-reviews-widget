@@ -238,10 +238,8 @@ var RW_HOME_CONFIG = {
 
     container.innerHTML = '<div class="rw-home-loading">Завантаження відгуків...</div>';
 
+    // Використовуємо вже ініціалізований Firebase з reviews-widget.js
     var firebase = window.firebase;
-    if (!firebase.apps || !firebase.apps.length) {
-      firebase.initializeApp(RW_HOME_CONFIG.firebase);
-    }
     var db = firebase.firestore();
 
     db.collection('reviews')
