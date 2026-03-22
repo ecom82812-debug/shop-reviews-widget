@@ -182,12 +182,19 @@ function buildCard(r) {
     ? `<div class="existing-reply"><strong>Відповідь магазину</strong>${escHtml(r.reply)}</div>`
     : '';
 
+  let dateVal = '';
+  if (r.createdAt) {
+    const d = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
+    dateVal = d.toISOString().split('T')[0];
+  }
+
   return `<div class="card" id="card-${r.id}">
     <div class="card-header">
       <div class="card-meta">
         <div class="card-author">${escHtml(r.name||'Анонім')} ${starsHtml(r.rating||0)}</div>
         <div class="card-sub">
           <span>${fmtDate(r.createdAt)}</span>
+          <input type="date" value="${dateVal}" data-id="${r.id}" data-action="edit-date" style="font-size:12px;border:1px solid #ddd;border-radius:4px;padding:2px 6px;cursor:pointer;" title="Змінити дату">
           ${r.email ? `<span>${escHtml(r.email)}</span>` : ''}
           <span class="product-id">product: ${r.productId||'—'}</span>
         </div>
@@ -236,6 +243,21 @@ function bindCardEvents() {
     } else if (action === 'cancel-reply') {
       document.getElementById('reply-form-'+id).style.display = 'none';
     }
+  });
+
+  // Редагування дати
+  document.getElementById('reviews-list').addEventListener('change', e => {
+    const input = e.target.closest('input[data-action="edit-date"]');
+    if (!input) return;
+    const id = input.dataset.id;
+    const newDate = new Date(input.value);
+    if (isNaN(newDate.getTime())) return;
+    db.collection('reviews').doc(id).update({
+      createdAt: firebase.firestore.Timestamp.fromDate(newDate)
+    }).then(() => {
+      input.style.borderColor = '#4caf50';
+      setTimeout(() => input.style.borderColor = '#ddd', 1500);
+    });
   });
 }
 
