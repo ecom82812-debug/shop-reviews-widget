@@ -672,23 +672,40 @@ const CLOUDINARY_CONFIG = {
 
 })();
 
-// Патч: приховати дублікат
-(function hideDup() {
-  function hide() {
-    var widgets = document.querySelectorAll('.rw-widget');
-    if (widgets.length <= 1) return;
-    widgets.forEach(function(w) {
-      var el = w.parentElement;
+// Патч: перемістити віджет вниз на десктопі
+(function moveWidget() {
+  function move() {
+    var widget = document.querySelector('.rw-widget');
+    if (!widget) return;
+    if (widget.dataset.moved) return;
+
+    var colRight = widget.closest ? widget.closest('.t-store__prod-popup__col-right') : null;
+    if (!colRight) {
+      var el = widget.parentElement;
       while (el && el !== document.body) {
         if (el.className && el.className.indexOf('t-store__prod-popup__col-right') !== -1) {
-          w.style.cssText = 'display:none!important';
-          break;
+          colRight = el; break;
         }
         el = el.parentElement;
       }
-    });
+    }
+    if (!colRight) return;
+
+    var container = colRight.parentElement;
+    while (container && container !== document.body) {
+      if (container.className && (
+        container.className.indexOf('t-store__prod-popup') !== -1 ||
+        container.className.indexOf('t-container') !== -1
+      )) break;
+      container = container.parentElement;
+    }
+    if (!container) return;
+
+    widget.dataset.moved = '1';
+    container.parentNode.insertBefore(widget, container.nextSibling);
   }
-  setTimeout(hide, 800);
-  setTimeout(hide, 1500);
-  setTimeout(hide, 3000);
+
+  setTimeout(move, 600);
+  setTimeout(move, 1500);
+  setTimeout(move, 3000);
 })();
