@@ -671,3 +671,24 @@ const CLOUDINARY_CONFIG = {
   }
 
 })();
+
+// Патч: приховати дублікат
+(function hideDup() {
+  function hide() {
+    var widgets = document.querySelectorAll('.rw-widget');
+    if (widgets.length <= 1) return;
+    widgets.forEach(function(w) {
+      var el = w.parentElement;
+      while (el && el !== document.body) {
+        if (el.className && el.className.indexOf('t-store__prod-popup__col-right') !== -1) {
+          w.style.cssText = 'display:none!important';
+          break;
+        }
+        el = el.parentElement;
+      }
+    });
+  }
+  setTimeout(hide, 800);
+  setTimeout(hide, 1500);
+  setTimeout(hide, 3000);
+})();
