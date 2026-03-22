@@ -1,12 +1,9 @@
 // ============================================================
 // ВІДЖЕТ ВІДГУКІВ ДЛЯ ГОЛОВНОЇ СТОРІНКИ
-// Десктоп: 2 колонки (картки)
-// Мобільний: список, ім'я/дата зліва — зірочки справа
-// Пагінація: 5 спочатку, потім +3 по кнопці
 // ============================================================
 
 var RW_HOME_CONFIG = {
-  // Firebase налаштування
+  // Firebase налаштування — не змінювати
   firebase: {
     apiKey: "AIzaSyCS-7Vn4X_NDxbEGyTrb1JQewf1QCQNffA",
     authDomain: "shop-reviews-3aedd.firebaseapp.com",
@@ -16,20 +13,37 @@ var RW_HOME_CONFIG = {
     appId: "1:191060203071:web:c3025da0b9e7d805948a8a"
   },
 
-  // Скільки відгуків показувати спочатку
+  // ── ПАГІНАЦІЯ ──────────────────────────────────────────────
+  // Скільки відгуків показувати одразу при завантаженні
   initialCount: 5,
-
-  // Скільки підвантажувати по кнопці
+  // Скільки підвантажувати при кожному натисканні кнопки
   loadMoreCount: 3,
-
-  // Текст кнопки
+  // Текст кнопки "показати ще"
   loadMoreText: 'Показати ще відгуки',
 
-  // Розмір зірочок
+  // ── РОЗМІРИ ────────────────────────────────────────────────
+  // Розмір зірочок (пікселі)
   starSize: 14,
+  // Розмір фото у відгуку на десктопі (пікселі)
+  photoSize_desktop: 70,
+  // Розмір фото у відгуку на мобільному (пікселі)
+  photoSize_mobile: 60,
 
-  // Розмір фото
-  photoSize: 60,
+  // ── ДЕСКТОП РОЗМІРИ ────────────────────────────────────────
+  // Максимальна ширина всього блоку відгуків
+  maxWidth: '100%',
+  // Відступи блоку по боках на десктопі (збільшуй/зменшуй)
+  paddingDesktop: '0',
+  // Відстань між картками на десктопі
+  gapDesktop: '24px',
+  // Відступ всередині картки
+  cardPaddingDesktop: '20px',
+
+  // ── МОБІЛЬНИЙ РОЗМІРИ ──────────────────────────────────────
+  // Відступи блоку по боках на мобільному
+  paddingMobile: '0 12px',
+  // Відступ всередині картки на мобільному
+  cardPaddingMobile: '14px',
 };
 
 (function() {
@@ -38,30 +52,35 @@ var RW_HOME_CONFIG = {
   var allReviews = [];
   var shownCount = 0;
 
+  function isMobile() { return window.innerWidth <= 640; }
+  function photoSize() { return isMobile() ? RW_HOME_CONFIG.photoSize_mobile : RW_HOME_CONFIG.photoSize_desktop; }
+
   // ============================================================
   // СТИЛІ
   // ============================================================
   function injectStyles() {
     if (document.getElementById('rw-home-styles')) return;
+    var c = RW_HOME_CONFIG;
     var style = document.createElement('style');
     style.id = 'rw-home-styles';
     style.textContent = [
-      '.rw-home { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; max-width:950px; margin:0 auto; padding:0 40px; box-sizing:border-box; }',
+      // Загальний контейнер
+      '.rw-home { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; max-width:' + c.maxWidth + '; margin:0 auto; padding:' + c.paddingDesktop + '; box-sizing:border-box; }',
       '.rw-home * { box-sizing:border-box; }',
 
-      // Десктоп: 2 колонки
-      '.rw-home-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }',
+      // Сітка — 2 колонки на десктопі
+      '.rw-home-grid { display:grid; grid-template-columns:1fr 1fr; gap:' + c.gapDesktop + '; }',
 
       // Картка відгуку
-      '.rw-home-card { background:#fff; border:0.5px solid #e5e5e5; border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:8px; }',
+      '.rw-home-card { background:#fff; border:0.5px solid #e5e5e5; border-radius:10px; padding:' + c.cardPaddingDesktop + '; display:flex; flex-direction:column; gap:8px; }',
 
-      // Шапка картки: ім'я/дата зліва, зірочки справа
+      // Шапка: ім'я/дата зліва, зірочки справа
       '.rw-home-header { display:flex; justify-content:space-between; align-items:flex-start; }',
       '.rw-home-left { display:flex; flex-direction:column; gap:2px; }',
       '.rw-home-author { font-weight:600; font-size:14px; color:#111; }',
       '.rw-home-date { font-size:12px; color:#aaa; }',
 
-      // Назва товару
+      // Назва товару з посиланням
       '.rw-home-product { font-size:12px; color:#888; padding-bottom:8px; border-bottom:1px solid #f0f0f0; }',
       '.rw-home-product a { color:#555; text-decoration:none; border-bottom:1px dashed #bbb; transition:color .15s; }',
       '.rw-home-product a:hover { color:#111; border-bottom-color:#111; }',
@@ -69,7 +88,7 @@ var RW_HOME_CONFIG = {
       // Текст відгуку
       '.rw-home-text { font-size:13px; color:#444; line-height:1.6; flex:1; }',
 
-      // Фото
+      // Фото у відгуку
       '.rw-home-photos { display:flex; flex-wrap:wrap; gap:6px; }',
       '.rw-home-photo { border-radius:6px; object-fit:cover; cursor:pointer; border:1px solid #eee; transition:transform .15s; }',
       '.rw-home-photo:hover { transform:scale(1.04); }',
@@ -79,21 +98,22 @@ var RW_HOME_CONFIG = {
       '.rw-home-reply-label { font-size:10px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:.05em; margin-bottom:3px; }',
       '.rw-home-reply-text { font-size:12px; color:#333; line-height:1.5; }',
 
-      // Кнопка "показати ще"
-      '.rw-home-more-wrap { text-align:center; margin-top:20px; }',
-      '.rw-home-more { display:inline-block; padding:11px 32px; background:#111; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s; }',
-      '.rw-home-more:hover { background:#333; }',
-
-      // Порожній стан
-      '.rw-home-empty { text-align:center; padding:32px; color:#aaa; font-size:14px; }',
-
       // Зірочки
       '.rw-home-stars { display:inline-flex; gap:2px; flex-shrink:0; }',
 
-      // Мобільний — одна колонка
+      // Кнопка "показати ще"
+      '.rw-home-more-wrap { text-align:center; margin-top:24px; }',
+      '.rw-home-more { display:inline-block; padding:11px 32px; background:#111; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s; }',
+      '.rw-home-more:hover { background:#333; }',
+
+      // Порожній стан і завантаження
+      '.rw-home-empty { text-align:center; padding:32px; color:#aaa; font-size:14px; }',
+
+      // ── МОБІЛЬНИЙ ──────────────────────────────────────────
       '@media(max-width:640px) {',
+      '  .rw-home { padding:' + c.paddingMobile + '; }',
       '  .rw-home-grid { grid-template-columns:1fr; gap:12px; }',
-      '  .rw-home-card { padding:12px; }',
+      '  .rw-home-card { padding:' + c.cardPaddingMobile + '; }',
       '  .rw-home-author { font-size:13px; }',
       '}',
     ].join('\n');
@@ -126,13 +146,13 @@ var RW_HOME_CONFIG = {
   }
 
   // ============================================================
-  // HTML ОДНОГО ВІДГУКУ (картка)
+  // HTML КАРТКИ ВІДГУКУ
   // ============================================================
   function buildCard(r) {
-    var ps = RW_HOME_CONFIG.photoSize;
+    var ps = photoSize();
     var html = '<div class="rw-home-card">';
 
-    // Шапка: ім'я/дата зліва, зірочки справа
+    // Шапка: ім'я і дата зліва, зірочки справа
     html += '<div class="rw-home-header">';
     html += '<div class="rw-home-left">';
     html += '<div class="rw-home-author">' + escHtml(r.name || 'Анонім') + '</div>';
@@ -141,7 +161,7 @@ var RW_HOME_CONFIG = {
     html += starsHTML(r.rating || 0);
     html += '</div>';
 
-    // Назва товару
+    // Назва товару з посиланням
     if (r.productName || r.productUrl) {
       var name = r.productName || 'Переглянути товар';
       var url = r.productUrl || '#';
@@ -153,7 +173,7 @@ var RW_HOME_CONFIG = {
       html += '<div class="rw-home-text">' + escHtml(r.text) + '</div>';
     }
 
-    // Фото
+    // Фото — клік відкриває lightbox з каруселлю
     if (r.photos && r.photos.length) {
       var photosJson = JSON.stringify(r.photos).replace(/"/g, '&quot;');
       html += '<div class="rw-home-photos">';
@@ -179,27 +199,26 @@ var RW_HOME_CONFIG = {
   }
 
   // ============================================================
-  // РЕНДЕР СПИСКУ ВІДГУКІВ З ПАГІНАЦІЄЮ
+  // РЕНДЕР СПИСКУ З ПАГІНАЦІЄЮ
   // ============================================================
   function renderList(container) {
     var toShow = allReviews.slice(0, shownCount);
-    var hasMore = shownCount < allReviews.length;
+    var remaining = allReviews.length - shownCount;
 
     var html = '<div class="rw-home-grid">';
     toShow.forEach(function(r) { html += buildCard(r); });
     html += '</div>';
 
-    if (hasMore) {
+    if (remaining > 0) {
       html += '<div class="rw-home-more-wrap">' +
         '<button class="rw-home-more" id="rw-home-more-btn">' +
-        RW_HOME_CONFIG.loadMoreText +
-        ' (' + (allReviews.length - shownCount) + ')' +
+        RW_HOME_CONFIG.loadMoreText + ' (' + remaining + ')' +
         '</button></div>';
     }
 
     container.innerHTML = html;
 
-    // Кнопка "показати ще"
+    // Обробник кнопки "показати ще"
     var moreBtn = container.querySelector('#rw-home-more-btn');
     if (moreBtn) {
       moreBtn.addEventListener('click', function() {
@@ -208,7 +227,7 @@ var RW_HOME_CONFIG = {
       });
     }
 
-    // Обробник кліків на фото
+    // Обробник кліків на фото — відкриває lightbox
     container.addEventListener('click', function(e) {
       var photo = e.target.closest('.rw-home-photo');
       if (!photo) return;
@@ -219,7 +238,7 @@ var RW_HOME_CONFIG = {
   }
 
   // ============================================================
-  // LIGHTBOX З КАРУСЕЛЛЮ
+  // LIGHTBOX З КАРУСЕЛЛЮ І СВАЙПОМ ДЛЯ МОБІЛЬНОГО
   // ============================================================
   function openLightbox(startIdx, photos) {
     var current = startIdx;
@@ -251,33 +270,49 @@ var RW_HOME_CONFIG = {
       }, 150);
     }
 
+    function next() { if (hasMultiple) { current = (current+1) % photos.length; update(); } }
+    function prev() { if (hasMultiple) { current = (current-1+photos.length) % photos.length; update(); } }
+
     lb.querySelector('#rw-lb-close').addEventListener('click', function(e) { e.stopPropagation(); lb.remove(); });
     lb.addEventListener('click', function(e) { if (e.target === lb) lb.remove(); });
 
     if (hasMultiple) {
-      lb.querySelector('#rw-lb-prev').addEventListener('click', function(e) {
-        e.stopPropagation();
-        current = (current - 1 + photos.length) % photos.length;
-        update();
-      });
-      lb.querySelector('#rw-lb-next').addEventListener('click', function(e) {
-        e.stopPropagation();
-        current = (current + 1) % photos.length;
-        update();
-      });
+      lb.querySelector('#rw-lb-prev').addEventListener('click', function(e) { e.stopPropagation(); prev(); });
+      lb.querySelector('#rw-lb-next').addEventListener('click', function(e) { e.stopPropagation(); next(); });
     }
 
+    // Клавіатура
     function onKey(e) {
       if (e.key === 'Escape') { lb.remove(); document.removeEventListener('keydown', onKey); }
-      if (e.key === 'ArrowRight' && hasMultiple) { current = (current+1)%photos.length; update(); }
-      if (e.key === 'ArrowLeft' && hasMultiple) { current = (current-1+photos.length)%photos.length; update(); }
+      if (e.key === 'ArrowRight') next();
+      if (e.key === 'ArrowLeft') prev();
     }
     document.addEventListener('keydown', onKey);
+
+    // ── СВАЙП ДЛЯ МОБІЛЬНОГО ──────────────────────────────
+    var touchStartX = 0;
+    var touchStartY = 0;
+
+    lb.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    lb.addEventListener('touchend', function(e) {
+      var dx = e.changedTouches[0].clientX - touchStartX;
+      var dy = e.changedTouches[0].clientY - touchStartY;
+      // Свайп тільки якщо горизонтальний (більше ніж вертикальний)
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+        if (dx < 0) next(); // свайп вліво — наступне фото
+        else prev();        // свайп вправо — попереднє фото
+      }
+    }, { passive: true });
+
     document.body.appendChild(lb);
   }
 
   // ============================================================
-  // ЗАВАНТАЖЕННЯ ВІДГУКІВ
+  // ЗАВАНТАЖЕННЯ ВІДГУКІВ З FIREBASE
   // ============================================================
   function loadReviews(container) {
     container.innerHTML = '<div class="rw-home-empty">Завантаження...</div>';
@@ -296,12 +331,11 @@ var RW_HOME_CONFIG = {
           container.innerHTML = '<div class="rw-home-empty">Ще немає відгуків</div>';
           return;
         }
-
         shownCount = Math.min(RW_HOME_CONFIG.initialCount, allReviews.length);
         renderList(container);
       })
       .catch(function() {
-        // Запасний варіант без сортування
+        // Запасний варіант без сортування якщо немає індексу
         db.collection('reviews')
           .where('status', '==', 'approved')
           .get()
@@ -314,7 +348,6 @@ var RW_HOME_CONFIG = {
               container.innerHTML = '<div class="rw-home-empty">Ще немає відгуків</div>';
               return;
             }
-
             shownCount = Math.min(RW_HOME_CONFIG.initialCount, allReviews.length);
             renderList(container);
           });

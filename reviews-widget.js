@@ -820,7 +820,22 @@ window.rwLightbox = function(startIdx, photos) {
     if (e.key === 'ArrowLeft' && hasMultiple) { current = (current - 1 + photos.length) % photos.length; render(); }
   }
   document.addEventListener('keydown', onKey);
-  lb.addEventListener('remove', function() { document.removeEventListener('keydown', onKey); });
+
+  // Свайп для мобільного
+  var touchStartX = 0;
+  var touchStartY = 0;
+  lb.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  lb.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50 && hasMultiple) {
+      if (dx < 0) { current = (current + 1) % photos.length; render(); }
+      else { current = (current - 1 + photos.length) % photos.length; render(); }
+    }
+  }, { passive: true });
 
   document.body.appendChild(lb);
 };
