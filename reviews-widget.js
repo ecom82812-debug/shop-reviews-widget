@@ -39,8 +39,24 @@ const CLOUDINARY_CONFIG = {
     // Стилі віджету
     injectStyles();
 
-    // Запускаємо рейтинги в каталозі
-    renderCatalogRatings(db);
+    // Запускаємо рейтинги в каталозі — з затримкою і спостерігачем
+    function tryRenderCatalog() {
+      var cards = document.querySelectorAll('.t-store__card[data-product-gen-uid]');
+      if (cards.length) {
+        renderCatalogRatings(db);
+      }
+    }
+
+    setTimeout(tryRenderCatalog, 500);
+    setTimeout(tryRenderCatalog, 1500);
+    setTimeout(tryRenderCatalog, 3000);
+
+    // MutationObserver для динамічного завантаження
+    var catalogObs = new MutationObserver(function() {
+      var cards = document.querySelectorAll('.t-store__card[data-product-gen-uid]:not([data-rw-done])');
+      if (cards.length) renderCatalogRatings(db);
+    });
+    catalogObs.observe(document.body, { childList: true, subtree: true });
 
     // Запускаємо повний віджет на сторінках товарів
     var productId = getProductId();
