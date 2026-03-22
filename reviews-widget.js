@@ -24,19 +24,19 @@ var CLOUDINARY_CONFIG = {
 // ============================================================
 var STAR_CONFIG = {
   // Зірочки під фото товару в каталозі (сторінка зі списком товарів)
-  catalog_desktop: 22,
+  catalog_desktop: 16,
   catalog_mobile: 14,
 
   // Зірочки над назвою товару на сторінці товару (вгорі в правій колонці)
-  product_header_desktop: 24,
-  product_header_mobile: 20,
+  product_header_desktop: 22,
+  product_header_mobile: 16,
 
   // Середній рейтинг у блоці відгуків (великі зірочки біля числа 5.0)
-  avg_rating_desktop: 28,
-  avg_rating_mobile: 22,
+  avg_rating_desktop: 22,
+  avg_rating_mobile: 18,
 
   // Зірочки біля кожного окремого відгуку в списку
-  review_item_desktop: 16,
+  review_item_desktop: 14,
   review_item_mobile: 13,
 };
 
@@ -45,7 +45,7 @@ var STAR_CONFIG = {
 // ============================================================
 var PHOTO_CONFIG = {
   // Розмір фото у відгуку (в пікселях)
-  size_desktop: 180,
+  size_desktop: 120,
   size_mobile: 80,
 };
 
@@ -121,6 +121,7 @@ var PHOTO_CONFIG = {
     style.id = 'rw-styles';
     style.textContent = [
       '.rw-stars { display:inline-flex; gap:2px; vertical-align:middle; }',
+      '.rw-star { width:14px; height:14px; }',
       '.rw-star-full { fill:#F5A623; }',
       '.rw-star-empty { fill:none; stroke:#F5A623; stroke-width:1.5; }',
 
@@ -647,8 +648,16 @@ var PHOTO_CONFIG = {
 
         uploadPhotos(selectedFiles).then(function(photoUrls) {
           submitBtn.textContent = 'Надсилаємо...';
+          // Беремо назву товару і URL зі сторінки
+          var productName = '';
+          var productUrl = window.location.href;
+          var nameEl = document.querySelector('.t-store__prod-popup__name, .js-store-prod-name');
+          if (nameEl) productName = nameEl.textContent.trim();
+
           return firebase.firestore().collection('reviews').add({
             productId: productId,
+            productName: productName,
+            productUrl: productUrl,
             name: name,
             email: email,
             text: text,
