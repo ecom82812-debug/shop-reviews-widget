@@ -169,6 +169,10 @@ const CLOUDINARY_CONFIG = {
   // УТИЛІТИ
   // ============================================================
   function getProductId() {
+    // Формат Tilda: /tproduct/288732088332-nazva-tovaru
+    var tproductMatch = window.location.pathname.match(/tproduct\/(\d+)/);
+    if (tproductMatch) return tproductMatch[1];
+
     // З URL параметра
     var url = new URL(window.location.href);
     var id = url.searchParams.get('productid') || url.searchParams.get('product_id') || url.searchParams.get('id');
@@ -178,8 +182,8 @@ const CLOUDINARY_CONFIG = {
     var el = document.querySelector('[data-product-id]');
     if (el) return String(el.dataset.productId);
 
-    // З pathname
-    var match = window.location.pathname.match(/product[s]?\/?(\d+)/i);
+    // Загальний патерн з pathname
+    var match = window.location.pathname.match(/\/(\d{10,})/);
     if (match) return match[1];
 
     return null;
@@ -207,21 +211,9 @@ const CLOUDINARY_CONFIG = {
   // РЕЙТИНГ В КАТАЛОЗІ
   // ============================================================
   function renderCatalogRatings(db) {
-    // Шукаємо всі картки товарів Tilda
-    var cards = document.querySelectorAll('[data-product-id], .t-store__card, .js-store-product-item, [data-tilda-product-id]');
-
-    cards.forEach(function(card) {
-      var pid = card.dataset.productId || card.dataset.tildaProductId;
-      if (!pid) {
-        // Спробуємо знайти посилання з productid
-        var link = card.querySelector('a[href*="productid"]');
-        if (link) {
-          var m = link.href.match(/productid=(\d+)/);
-          if (m) pid = m[1];
-        }
-      }
-      if (!pid) return;
-
+    function processCard(card, pid) {
+      if (card.dataset.rwDone) return;
+      card.dataset.rwDone = '1';
       db.collection('reviews')
         .where('productId', '==', String(pid))
         .where('status', '==', 'approved')
@@ -231,19 +223,40 @@ const CLOUDINARY_CONFIG = {
           var total = 0;
           snap.forEach(function(d) { total += (d.data().rating || 0); });
           var avg = total / snap.size;
-
           var el = document.createElement('div');
           el.className = 'rw-inline';
           el.innerHTML = starsHTML(avg, 13) + '<strong>' + avg.toFixed(1) + '</strong><span>(' + snap.size + ')</span>';
-
-          // Вставляємо після назви товару або перед ціною
-          var insertAfter = card.querySelector('.t-store__card-title, .js-product-title, h3, h2');
+          var insertAfter = card.querySelector('[class*="title"], [class*="name"], h3, h2, h4');
           if (insertAfter && insertAfter.parentNode) {
             insertAfter.parentNode.insertBefore(el, insertAfter.nextSibling);
           } else {
-            card.prepend(el);
+            card.appendChild(el);
           }
         });
+    }
+
+    // Варіант 1: стандартні картки Tilda Store
+    var cards = document.querySelectorAll('.t-store__card, [data-product-id]');
+    cards.forEach(function(card) {
+      var pid = card.dataset.productId;
+      if (!pid) {
+        var link = card.querySelector('a[href*="tproduct"]');
+        if (link) { var m = link.href.match(/tproduct\/(\d+)/); if (m) pid = m[1]; }
+      }
+      if (!pid) {
+        var link2 = card.querySelector('a[href*="productid"]');
+        if (link2) { var m2 = link2.href.match(/productid=(\d+)/); if (m2) pid = m2[1]; }
+      }
+      if (pid) processCard(card, pid);
+    });
+
+    // Варіант 2: посилання на tproduct на сторінці каталогу
+    document.querySelectorAll('a[href*="tproduct"]').forEach(function(link) {
+      var m = link.href.match(/tproduct\/(\d+)/);
+      if (!m) return;
+      var pid = m[1];
+      var card = link.closest('li, article, [class*="card"], [class*="item"], [class*="product"]') || link.parentElement.parentElement;
+      if (card) processCard(card, pid);
     });
   }
 
@@ -254,7 +267,7 @@ const CLOUDINARY_CONFIG = {
     // Вставляємо рейтинг над назвою товару (popup або сторінка)
     function tryInsertHeader() {
       // Назва товару в різних блоках Tilda
-      var titleEl = document.querySelector('.t-product__title, .js-product-popup-title, .t-store__product-title, h1.t-title');
+      var titleEl = document.querySelector('.t-product__title, .t-store__product-title, .js-product-popup-title, h1.t-title, .t-col h1, .t-text h1, [class*="product"] h1, [class*="product"] h2');
       if (!titleEl) return false;
 
       if (document.getElementById('rw-header-'+productId)) return true;
@@ -271,7 +284,11 @@ const CLOUDINARY_CONFIG = {
 
     // Вставляємо блок відгуків внизу
     function tryInsertWidget() {
-      var anchor = document.querySelector('.t-product__description-wrapper, .js-product-popup-description, .t-store__product-description, [data-product-reviews-anchor]');
+      var anchor = document.querySelector('.t-product__description-wrapper, .t-store__product-description, .js-product-popup-description, .t-col .t-text, .t-container .t-col:last-child, [class*="product-description"]');
+      if (!anchor) {
+        // Запасний варіант — вставляємо в кінець основного контенту сторінки
+        anchor = document.querySelector('.t-body, #allrecords, .t-records');
+      }
       if (!anchor) return false;
       if (document.getElementById('rw-widget-'+productId)) return true;
 
