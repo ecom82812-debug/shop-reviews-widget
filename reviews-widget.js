@@ -266,18 +266,20 @@ const CLOUDINARY_CONFIG = {
   function waitForProductPage(db, productId) {
     // Вставляємо рейтинг над назвою товару (popup або сторінка)
     function tryInsertHeader() {
-      // Назва товару в різних блоках Tilda
-      var titleEl = document.querySelector('.t-product__title, .t-store__product-title, .js-product-popup-title, h1.t-title, .t-col h1, .t-text h1, [class*="product"] h1, [class*="product"] h2');
+      // Назва товару в Tilda Store
+      var titleEl = document.querySelector(
+        '.t-store__prod-popup__name, .js-store-prod-name, .js-product-name, ' +
+        '.t-product__title, h1.t-title, .t-col h1'
+      );
       if (!titleEl) return false;
-
       if (document.getElementById('rw-header-'+productId)) return true;
 
       var wrap = document.createElement('div');
       wrap.id = 'rw-header-'+productId;
       wrap.className = 'rw-inline';
       wrap.innerHTML = '<span class="rw-skeleton" style="width:90px;height:14px;display:inline-block;"></span>';
+      // Вставляємо ПЕРЕД назвою товару
       titleEl.parentNode.insertBefore(wrap, titleEl);
-
       loadProductRating(db, productId, wrap);
       return true;
     }
