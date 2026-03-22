@@ -292,14 +292,17 @@ var RW_HOME_CONFIG = {
       });
   }
 
-  // Старт
+  // Старт — чекаємо поки Firebase і Firestore будуть готові
   function start() {
     injectStyles();
-    loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js', function() {
-      loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js', function() {
+    function waitForFirestore() {
+      if (window.firebase && window.firebase.firestore) {
         renderHomeReviews();
-      });
-    });
+      } else {
+        setTimeout(waitForFirestore, 200);
+      }
+    }
+    waitForFirestore();
   }
 
   if (document.readyState === 'loading') {
