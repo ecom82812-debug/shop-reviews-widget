@@ -241,7 +241,7 @@ const CLOUDINARY_CONFIG = {
           var avg = total / snap.size;
           var el = document.createElement('div');
           el.className = 'rw-inline';
-          el.innerHTML = starsHTML(avg, 15) + '<strong>' + avg.toFixed(1) + '</strong><span>(' + snap.size + ')</span>';
+          el.innerHTML = starsHTML(avg, 17) + '<strong>' + avg.toFixed(1) + '</strong><span>(' + snap.size + ')</span>';
           // Вставляємо після назви товару
           var insertAfter = card.querySelector('.t-store__card__title, .js-store-prod-name, [class*="title"], h3, h2');
           if (insertAfter && insertAfter.parentNode) {
@@ -352,7 +352,7 @@ const CLOUDINARY_CONFIG = {
         var total = 0;
         snap.forEach(function(d) { total += d.data().rating || 0; });
         var avg = total / snap.size;
-        el.innerHTML = starsHTML(avg, 14) + '<strong>' + avg.toFixed(1) + '</strong><span>(' + snap.size + ' відгуків)</span>';
+        el.innerHTML = starsHTML(avg, 17) + '<strong>' + avg.toFixed(1) + '</strong><span>(' + snap.size + ' відгуків)</span>';
       });
   }
 
@@ -397,7 +397,7 @@ const CLOUDINARY_CONFIG = {
     if (reviews.length) {
       html += '<div class="rw-avg-block">';
       html += '<span class="rw-avg-num">' + avg.toFixed(1) + '</span>';
-      html += '<div><div class="rw-avg-stars">' + starsHTML(avg, 18) + '</div>';
+      html += '<div><div class="rw-avg-stars">' + starsHTML(avg, 20) + '</div>';
       html += '<div class="rw-avg-count">' + reviews.length + ' ' + plural(reviews.length, 'відгук','відгуки','відгуків') + '</div></div>';
       html += '</div>';
     }
