@@ -679,22 +679,14 @@ const CLOUDINARY_CONFIG = {
   function moveHeader() {
     var header = document.querySelector('.rw-inline[id^="rw-header"]');
     if (!header || header.dataset.movedH) return;
-    var prodContainer = header.closest
-      ? header.closest('.t-store__prod-popup, .t-store__product, .t-container')
-      : null;
-    if (!prodContainer) {
-      var el = header.parentElement;
-      while (el && el !== document.body) {
-        if (el.className && (
-          el.className.indexOf('t-store__prod-popup') !== -1 ||
-          el.className.indexOf('t-container') !== -1
-        )) { prodContainer = el; break; }
-        el = el.parentElement;
-      }
-    }
-    if (!prodContainer) return;
+
+    // Знаходимо правильне місце — перед назвою товару
+    var titleEl = document.querySelector('.t-store__prod-popup__name, .js-store-prod-name');
+    if (!titleEl) return;
+
     header.dataset.movedH = '1';
-    prodContainer.parentNode.insertBefore(header, prodContainer);
+    // Вставляємо прямо перед назвою товару
+    titleEl.parentNode.insertBefore(header, titleEl);
   }
 
   function moveWidget() {
